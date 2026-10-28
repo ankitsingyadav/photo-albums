@@ -101,7 +101,7 @@ npm test
 
 The backend tests use Vitest and Supertest. Run the suite after making changes to routes, authentication, image handling, album operations, or sharing behaviour.
 
-### Testing
+## Testing
 
 The application was tested using automated backend tests with **Vitest and Supertest**. A total of **82 tests across 6 test files passed**, covering core functionality and API behavior.
 
