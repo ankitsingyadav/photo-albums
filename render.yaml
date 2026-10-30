@@ -3,8 +3,8 @@ services:
     name: photo-albums
     runtime: node
     plan: free
-    buildCommand: cd frontend && npm install --include=dev && npm run build && cd ../backend && npm install --include=dev
-    startCommand: cd backend && npm run seed -- --force && NODE_ENV=production npm start
+    buildCommand: cd frontend && npm install && npm run build && cd ../backend && npm install
+    startCommand: cd backend && npm run seed -- --force && npm start
     envVars:
       - key: NODE_ENV
         value: production
