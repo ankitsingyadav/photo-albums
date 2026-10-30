@@ -24,8 +24,21 @@ export function sendStored(
   stream.pipe(res);
 }
 
-/** Streams a ZIP of the given photos (original files) to the client. */
+export const MAX_ZIP_PHOTOS = 200;
+export const MAX_ZIP_TOTAL_BYTES = 500 * 1024 * 1024; // 500 MB limit to prevent resource exhaustion
+
+/** Streams a ZIP of the given photos (original files) to the client with size and count caps. */
 export function sendZip(res: Response, storage: Storage, title: string, photos: PhotoRow[], cache = "no-store") {
+  if (photos.length > MAX_ZIP_PHOTOS) {
+    res.status(400).json({ error: `ZIP download limited to ${MAX_ZIP_PHOTOS} photos at once` });
+    return;
+  }
+  const totalBytes = photos.reduce((acc, p) => acc + (p.size ?? 0), 0);
+  if (totalBytes > MAX_ZIP_TOTAL_BYTES) {
+    res.status(400).json({ error: "ZIP download limited to 500 MB total size" });
+    return;
+  }
+
   const safeTitle = title.replace(/[^\p{L}\p{N} _-]/gu, "").trim() || "album";
   res.set("Content-Type", "application/zip");
   res.set("Cache-Control", cache);
