@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useParams } from "react-router-dom";
 import { api, qs } from "../api";
 import { useLoad } from "../hooks";
@@ -15,6 +15,24 @@ export default function Shared() {
   const view = useLoad(() => api.get<{ album: { title: string; photoCount: number }; photos: Photo[] }>(`/api/public/albums/${token}${qs({ sort })}`), [token, sort]);
   const photos = useMemo(() => view.data?.photos ?? [], [view.data]);
   const hero = photos[0];
+
+  // Periodically verify the share link is still active so revocation updates automatically without refresh
+  useEffect(() => {
+    const checkLink = async () => {
+      try {
+        await api.get(`/api/public/albums/${token}${qs({ sort })}`);
+      } catch {
+        void view.reload();
+      }
+    };
+
+    const interval = setInterval(() => void checkLink(), 4000);
+    window.addEventListener("focus", checkLink);
+    return () => {
+      clearInterval(interval);
+      window.removeEventListener("focus", checkLink);
+    };
+  }, [token, sort, view]);
 
   return (
     <div className="min-h-screen">
