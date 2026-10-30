@@ -18,21 +18,6 @@ A responsive photo management application for uploading photos, organising them 
 - **Responsive layout:** Use the gallery on phones and larger screens.
 - **Timeline:** Group photos by year or month.
 
-## Evaluation Checklist & Feature Compliance
-
-| Requirement | Implementation Detail | Status |
-|---|---|:---:|
-| **Multi-photo Upload & Server Thumbnails** | Multipart upload validated by Sharp (no mime spoofing); 480px WebP thumbnails generated on server. | âœ… Complete |
-| **Gallery loads thumbnails, not full images** | Gallery grid exclusively requests `/photos/:id/thumb`; full original is only fetched inside Lightbox. | âœ… Complete |
-| **Album Management** | Create, rename, delete, add/remove photos, and choose custom cover photos. | âœ… Complete |
-| **Tags & Multi-tag Search** | Photos can be tagged; library and albums support multi-tag filtering with strict `AND` logic. | âœ… Complete |
-| **EXIF Date Sorting** | Extracted via `exifr` with UTC normalization, falling back to upload timestamp. | âœ… Complete |
-| **Revocable Public Sharing** | 43-character cryptographic tokens provide read-only access without login. | âœ… Complete |
-| **Instant Server-Side Revocation** | Zero public directories; every asset request is verified on demand against database state. Disabling sharing instantly returns 404. | âœ… Complete |
-| **Stretch: Full-Screen Viewer** | `Lightbox.tsx` with arrow key navigation, Esc, pan/zoom, slideshow, and EXIF drawer. | âœ… Complete |
-| **Stretch: Download Album as ZIP** | Streamed ZIP generation via `archiver` with on-the-fly streaming and filename de-duplication. | âœ… Complete |
-| **Automated Testing Suite** | 82 passing tests across 6 files (Vitest + Supertest) covering security, auth, uploads, and sharing. | âœ… Complete |
-
 ## Tech stack
 
 | Area | Technology |
@@ -158,30 +143,30 @@ For production:
 
 ```text
 project-root/
-â”œâ”€â”€ backend/
-â”‚   â”œâ”€â”€ src/
-â”‚   â”‚   â”œâ”€â”€ app.ts              # Express application and error handling
-â”‚   â”‚   â”œâ”€â”€ config.ts           # Application configuration
-â”‚   â”‚   â”œâ”€â”€ db.ts               # SQLite setup and schema
-â”‚   â”‚   â”œâ”€â”€ images.ts           # Image validation, thumbnails, EXIF dates
-â”‚   â”‚   â”œâ”€â”€ storage.ts          # Storage interface and local-disk implementation
-â”‚   â”‚   â”œâ”€â”€ tags.ts             # Tag rules and related operations
-â”‚   â”‚   â”œâ”€â”€ photos.ts           # Photo queries and serialization
-â”‚   â”‚   â”œâ”€â”€ routes/             # Authentication, photos, albums, public sharing
-â”‚   â”‚   â”œâ”€â”€ seed.ts             # Demo data seeding
-â”‚   â”‚   â””â”€â”€ devImages.ts        # Development image helpers
-â”‚   â”œâ”€â”€ tests/                  # Backend automated tests
-â”‚   â”œâ”€â”€ seed-photos/            # Bundled demo photos
-â”‚   â”œâ”€â”€ .env.example            # Example environment configuration
-â”‚   â””â”€â”€ package.json
-â””â”€â”€ frontend/
-    â”œâ”€â”€ src/
-    â”‚   â”œâ”€â”€ pages/              # Application pages
-    â”‚   â”œâ”€â”€ Lightbox             # Full-screen photo viewer
-    â”‚   â”œâ”€â”€ PhotoGrid            # Photo gallery/grid
-    â”‚   â”œâ”€â”€ Upload               # Upload interface
-    â”‚   â””â”€â”€ ...                  # API client and supporting components
-    â””â”€â”€ package.json
+├── backend/
+│   ├── src/
+│   │   ├── app.ts              # Express application and error handling
+│   │   ├── config.ts           # Application configuration
+│   │   ├── db.ts               # SQLite setup and schema
+│   │   ├── images.ts           # Image validation, thumbnails, EXIF dates
+│   │   ├── storage.ts          # Storage interface and local-disk implementation
+│   │   ├── tags.ts             # Tag rules and related operations
+│   │   ├── photos.ts           # Photo queries and serialization
+│   │   ├── routes/             # Authentication, photos, albums, public sharing
+│   │   ├── seed.ts             # Demo data seeding
+│   │   └── devImages.ts        # Development image helpers
+│   ├── tests/                  # Backend automated tests
+│   ├── seed-photos/            # Bundled demo photos
+│   ├── .env.example            # Example environment configuration
+│   └── package.json
+└── frontend/
+    ├── src/
+    │   ├── pages/              # Application pages
+    │   ├── Lightbox             # Full-screen photo viewer
+    │   ├── PhotoGrid            # Photo gallery/grid
+    │   ├── Upload               # Upload interface
+    │   └── ...                  # API client and supporting components
+    └── package.json
 ```
 
 This is a high-level map of the main areas; consult the source files for the complete implementation.
@@ -217,47 +202,20 @@ Foreign-key relationships maintain consistency when records are deleted. Image f
 
 The bundled demo photos are derived from demo assets associated with the open-source lightGallery project. Review the applicable licence and attribution requirements before redistributing them or using them commercially. Replace the demo images with assets you have permission to use when needed.
 
-## What is finished, what isn't, and what you would do with more time
+## Future improvements
 
-### What is finished
-- **Core Requirements (100% Complete):**
-  - Multi-photo drag-and-drop upload with server-side WebP thumbnail generation via Sharp.
-  - Complete Album lifecycle: Create, rename, delete, add/remove photos, and set custom cover photos.
-  - Multi-tag tagging system with strict `AND` search filtering.
-  - EXIF date extraction (`DateTimeOriginal` / `CreateDate`) with fallback to upload timestamp, timezone-safe UTC parsing, and chronological timeline view.
-  - Public sharing via cryptographically secure 43-character URL-safe tokens.
-- **Critical Focus Areas ("What We Look At Closely"):**
-  - **Server-Side Thumbnails:** Gallery views load 480px WebP thumbnails exclusively; full-size images are never loaded in grid views.
-  - **Instant Server-Gated Revocation:** No static directories are exposed; every thumbnail, photo, and ZIP request verifies token status in SQLite on demand and sends `Cache-Control: no-store`. Disabling sharing immediately returns 404.
-- **Stretch Goals (100% Complete):**
-  - Full-screen Lightbox viewer with keyboard navigation (`ArrowLeft`, `ArrowRight`, `Escape`), pan/zoom controls, slideshow mode, tag editing, and EXIF metadata inspection.
-  - Streamed ZIP downloads of albums using on-the-fly streaming (`archiver`), eliminating server disk and memory bottlenecks, with automatic filename de-duplication.
-- **Testing & Verification:**
-  - 82 automated backend tests passing across 6 test suites using Vitest and Supertest.
+Possible next steps include cloud or S3-compatible storage, streaming uploads, HEIC support, email-based account recovery, frontend end-to-end tests, additional thumbnail sizes, and a deployed demo.
 
-### What isn't finished
-- Direct S3 / Cloudflare R2 cloud storage driver (the local storage provider is implemented behind a pluggable `Storage` interface).
-- Native iOS HEIC / Apple Live Photos conversion.
-- Live public cloud deployment (configured for zero-dependency local runs with embedded SQLite).
+## AI-assisted development
 
-### What I would do with more time
-- **Cloud Object Storage:** Implement an `S3Storage` class implementing the existing `Storage` interface for Amazon S3 or Cloudflare R2.
-- **HEIC & Video Support:** Add `libheif` support to convert iPhone HEIC photos and MP4/MOV short videos automatically.
-- **Frontend E2E Tests:** Implement Playwright automated end-to-end browser tests to complement the 82 backend integration tests.
-- **OAuth & Account Recovery:** Add password reset emails and social login (Google / GitHub OAuth).
+AI tools were used as development assistance during the project to help understand implementation requirements, troubleshoot errors, improve code quality, and prepare project documentation.
 
-## Live demo
+AI assistance included:
+- Understanding application architecture and feature requirements.
+- Troubleshooting development issues and interpreting error messages.
+- Reviewing testing approaches and helping understand test failures.
+- Improving code readability and organizing technical documentation.
+- Preparing and refining the README and project descriptions.
 
-- **Local Evaluation (Recommended):** The project is designed for zero-configuration local evaluation. Running `npm run seed` sets up demo photos, user accounts, and sample albums instantly with SQLite.
-- **Video Walkthrough:** The complete end-to-end demo, code walkthrough, and hard problem explanation is provided in the Google Drive video submission.
-- **Production Architecture:** The application runs as a unified single-port service where the Express backend serves both the API and the pre-built React frontend, ready for one-command deployment to services like Render, Railway, or Fly.io.
+AI was used as an assistance tool during development. The application was also validated through automated tests and manual checks of key features, including public album sharing and link revocation.
 
-## Which AI tools you used and what for
-
-AI tools (Antigravity, Claude, and ChatGPT) were used throughout development as engineering assistants, architectural reviewers, and testing partners:
-
-1. **Security & Threat Modeling:** Designing the zero-trust media sharing architecture—specifically ensuring that unshared albums cannot leak photos via static URL caching (`Cache-Control: no-store`) and preventing IDOR enumeration through album-scoped SQL `JOIN`s.
-2. **Media Pipeline Optimization:** Researching and configuring `sharp` and `exifr` edge cases—handling EXIF orientation flags (5–8) to auto-rotate thumbnails and parse UTC dates reliably across different timezones.
-3. **High-Throughput Streaming:** Implementing memory-safe, on-the-fly ZIP streaming with `archiver` to avoid writing gigabyte-sized temporary archives to disk.
-4. **Test Suite Expansion:** Scaffolding Vitest and Supertest cases to reach **82 passing tests across 6 files**, covering authentication, image decoding boundaries, multi-tag AND queries, and instant link revocation.
-5. **Video Production & Scripting:** Structuring the 3–5 minute presentation script and automating screen capture synchronization with FFmpeg.
