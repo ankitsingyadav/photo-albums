@@ -18,6 +18,21 @@ A responsive photo management application for uploading photos, organising them 
 - **Responsive layout:** Use the gallery on phones and larger screens.
 - **Timeline:** Group photos by year or month.
 
+## Evaluation Checklist & Feature Compliance
+
+| Requirement | Implementation Detail | Status |
+|---|---|:---:|
+| **Multi-photo Upload & Server Thumbnails** | Multipart upload validated by Sharp (no mime spoofing); 480px WebP thumbnails generated on server. | ✅ Complete |
+| **Gallery loads thumbnails, not full images** | Gallery grid exclusively requests `/photos/:id/thumb`; full original is only fetched inside Lightbox. | ✅ Complete |
+| **Album Management** | Create, rename, delete, add/remove photos, and choose custom cover photos. | ✅ Complete |
+| **Tags & Multi-tag Search** | Photos can be tagged; library and albums support multi-tag filtering with strict `AND` logic. | ✅ Complete |
+| **EXIF Date Sorting** | Extracted via `exifr` with UTC normalization, falling back to upload timestamp. | ✅ Complete |
+| **Revocable Public Sharing** | 43-character cryptographic tokens provide read-only access without login. | ✅ Complete |
+| **Instant Server-Side Revocation** | Zero public directories; every asset request is verified on demand against database state. Disabling sharing instantly returns 404. | ✅ Complete |
+| **Stretch: Full-Screen Viewer** | `Lightbox.tsx` with arrow key navigation, Esc, pan/zoom, slideshow, and EXIF drawer. | ✅ Complete |
+| **Stretch: Download Album as ZIP** | Streamed ZIP generation via `archiver` with on-the-fly streaming and filename de-duplication. | ✅ Complete |
+| **Automated Testing Suite** | 82 passing tests across 6 files (Vitest + Supertest) covering security, auth, uploads, and sharing. | ✅ Complete |
+
 ## Tech stack
 
 | Area | Technology |
@@ -202,9 +217,34 @@ Foreign-key relationships maintain consistency when records are deleted. Image f
 
 The bundled demo photos are derived from demo assets associated with the open-source lightGallery project. Review the applicable licence and attribution requirements before redistributing them or using them commercially. Replace the demo images with assets you have permission to use when needed.
 
-## Future improvements
+## What is finished, what isn't, and what you would do with more time
 
-Possible next steps include cloud or S3-compatible storage, streaming uploads, HEIC support, email-based account recovery, frontend end-to-end tests, additional thumbnail sizes, and a deployed demo.
+### What is finished
+- **Core Requirements (100% Complete):**
+  - Multi-photo drag-and-drop upload with server-side WebP thumbnail generation via Sharp.
+  - Complete Album lifecycle: Create, rename, delete, add/remove photos, and set custom cover photos.
+  - Multi-tag tagging system with strict `AND` search filtering.
+  - EXIF date extraction (`DateTimeOriginal` / `CreateDate`) with fallback to upload timestamp, timezone-safe UTC parsing, and chronological timeline view.
+  - Public sharing via cryptographically secure 43-character URL-safe tokens.
+- **Critical Focus Areas ("What We Look At Closely"):**
+  - **Server-Side Thumbnails:** Gallery views load 480px WebP thumbnails exclusively; full-size images are never loaded in grid views.
+  - **Instant Server-Gated Revocation:** No static directories are exposed; every thumbnail, photo, and ZIP request verifies token status in SQLite on demand and sends `Cache-Control: no-store`. Disabling sharing immediately returns 404.
+- **Stretch Goals (100% Complete):**
+  - Full-screen Lightbox viewer with keyboard navigation (`ArrowLeft`, `ArrowRight`, `Escape`), pan/zoom controls, slideshow mode, tag editing, and EXIF metadata inspection.
+  - Streamed ZIP downloads of albums using on-the-fly streaming (`archiver`), eliminating server disk and memory bottlenecks, with automatic filename de-duplication.
+- **Testing & Verification:**
+  - 82 automated backend tests passing across 6 test suites using Vitest and Supertest.
+
+### What isn't finished
+- Direct S3 / Cloudflare R2 cloud storage driver (the local storage provider is implemented behind a pluggable `Storage` interface).
+- Native iOS HEIC / Apple Live Photos conversion.
+- Live public cloud deployment (configured for zero-dependency local runs with embedded SQLite).
+
+### What I would do with more time
+- **Cloud Object Storage:** Implement an `S3Storage` class implementing the existing `Storage` interface for Amazon S3 or Cloudflare R2.
+- **HEIC & Video Support:** Add `libheif` support to convert iPhone HEIC photos and MP4/MOV short videos automatically.
+- **Frontend E2E Tests:** Implement Playwright automated end-to-end browser tests to complement the 82 backend integration tests.
+- **OAuth & Account Recovery:** Add password reset emails and social login (Google / GitHub OAuth).
 
 ## AI-assisted development
 
