@@ -47,6 +47,14 @@ From automatic thumbnail generation to EXIF-based photo timelines, the applicati
 
 ---
 
+## 🌐 Live Demo
+
+🚀 **[Visit Photo Albums — Live Website](https://photo-albums-fx2n.onrender.com/)**
+
+Explore the deployed application and try its photo album management, tagging, timeline, and sharing features.
+
+---
+
 ## 🚀 Features
 
 | Feature | Description |
