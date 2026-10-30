@@ -17,7 +17,7 @@ export default function Shared() {
   const photos = useMemo(() => view.data?.photos ?? [], [view.data]);
   const hero = photos[0];
 
-  // Actively check if public sharing was turned off by the owner in real time
+  // Efficient revocation check on tab focus + 60s fallback to avoid wasteful polling
   useEffect(() => {
     if (revoked || !view.data) return;
     const checkStatus = async () => {
@@ -28,7 +28,7 @@ export default function Shared() {
       }
     };
 
-    const interval = setInterval(() => void checkStatus(), 2500);
+    const interval = setInterval(() => void checkStatus(), 60000); // 60s fallback interval
     window.addEventListener("focus", checkStatus);
     return () => {
       clearInterval(interval);
