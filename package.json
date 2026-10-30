@@ -1,0 +1,10 @@
+{
+  "name": "photo-albums",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Responsive photo management and album sharing application",
+  "scripts": {
+    "build": "cd frontend && npm install && npm run build && cd ../backend && npm install",
+    "start": "cd backend && npm run seed -- --force && NODE_ENV=production npm start"
+  }
+}
