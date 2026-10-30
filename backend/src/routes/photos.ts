@@ -1,6 +1,8 @@
 import { Router } from "express";
 import multer from "multer";
 import path from "node:path";
+import fs from "node:fs/promises";
+import { existsSync, mkdirSync } from "node:fs";
 import { randomUUID } from "node:crypto";
 import { z } from "zod";
 import type { AppContext } from "../types.js";
@@ -23,12 +25,20 @@ const photoIds = z
 const bulkFavoriteBody = z.object({ photoIds, favorite: z.boolean({ error: "favorite must be true or false" }) });
 const bulkTagsBody = z.object({ photoIds, add: z.unknown().optional(), remove: z.unknown().optional() });
 
+import os from "node:os";
+
 export function photosRouter(ctx: AppContext) {
   const { db, storage, config } = ctx;
   const r = Router();
 
+  const tmpUploadDir = path.join(os.tmpdir(), "photo-albums-uploads");
+  if (!existsSync(tmpUploadDir)) {
+    mkdirSync(tmpUploadDir, { recursive: true });
+  }
+
+  // Stream uploads to OS temp directory instead of memory buffering
   const upload = multer({
-    storage: multer.memoryStorage(),
+    dest: tmpUploadDir,
     limits: { fileSize: config.maxUploadMb * 1024 * 1024, files: config.maxFilesPerUpload },
   });
 
@@ -73,10 +83,12 @@ export function photosRouter(ctx: AppContext) {
 
     for (const file of files) {
       const filename = path.basename(file.originalname).slice(0, 255) || "photo";
+      const fileBuffer = file.buffer ?? (file.path ? await fs.readFile(file.path) : Buffer.alloc(0));
       let img;
       try {
-        img = await processImage(file.buffer); // validates, makes the thumbnail, reads EXIF
+        img = await processImage(fileBuffer); // validates, makes the thumbnail, reads EXIF
       } catch (e) {
+        if (file.path) await fs.unlink(file.path).catch(() => {});
         if (e instanceof UnsupportedImageError) {
           errors.push({ filename, message: e.message });
           continue;
@@ -87,8 +99,9 @@ export function photosRouter(ctx: AppContext) {
       const base = randomUUID();
       const originalKey = `${base}.${img.ext}`;
       const thumbKey = `${base}_thumb.webp`;
-      await storage.save(originalKey, file.buffer);
+      await storage.save(originalKey, fileBuffer);
       await storage.save(thumbKey, img.thumb);
+      if (file.path) await fs.unlink(file.path).catch(() => {});
 
       try {
         const now = new Date().toISOString();
