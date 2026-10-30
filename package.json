@@ -4,7 +4,7 @@
   "private": true,
   "description": "Responsive photo management and album sharing application",
   "scripts": {
-    "build": "cd frontend && npm install && npm run build && cd ../backend && npm install",
+    "build": "cd frontend && npm install --include=dev && npm run build && cd ../backend && npm install --include=dev",
     "start": "cd backend && npm run seed -- --force && NODE_ENV=production npm start"
   }
 }
