@@ -12,33 +12,35 @@ export default function Shared() {
   const { token } = useParams();
   const [sort, setSort] = useState<Sort>("date_desc");
   const [viewer, setViewer] = useState<number | null>(null);
+  const [revoked, setRevoked] = useState(false);
   const view = useLoad(() => api.get<{ album: { title: string; photoCount: number }; photos: Photo[] }>(`/api/public/albums/${token}${qs({ sort })}`), [token, sort]);
   const photos = useMemo(() => view.data?.photos ?? [], [view.data]);
   const hero = photos[0];
 
-  // Periodically verify the share link is still active so revocation updates automatically without refresh
+  // Actively check if public sharing was turned off by the owner in real time
   useEffect(() => {
-    const checkLink = async () => {
+    if (revoked || !view.data) return;
+    const checkStatus = async () => {
       try {
-        await api.get(`/api/public/albums/${token}${qs({ sort })}`);
+        await api.get(`/api/public/albums/${token}`);
       } catch {
-        void view.reload();
+        setRevoked(true);
       }
     };
 
-    const interval = setInterval(() => void checkLink(), 4000);
-    window.addEventListener("focus", checkLink);
+    const interval = setInterval(() => void checkStatus(), 2500);
+    window.addEventListener("focus", checkStatus);
     return () => {
       clearInterval(interval);
-      window.removeEventListener("focus", checkLink);
+      window.removeEventListener("focus", checkStatus);
     };
-  }, [token, sort, view]);
+  }, [token, revoked, view.data]);
 
   return (
     <div className="min-h-screen">
       <header className="mx-auto flex max-w-7xl items-center justify-between px-3 py-3 sm:px-6"><Logo /><span className="inline-flex items-center gap-1.5 rounded-full bg-white px-3 py-1 text-xs font-medium text-slate-500 shadow-sm ring-1 ring-slate-200"><Icon name="eye" className="h-3.5 w-3.5" />View only</span></header>
       <main className="mx-auto max-w-7xl space-y-5 px-3 pb-16 sm:px-6">
-        {!view.data && view.loading ? <GridSkeleton /> : view.error || !view.data ? (
+        {!view.data && view.loading ? <GridSkeleton /> : (revoked || view.error || !view.data) ? (
           <div className="mx-auto max-w-md pt-16"><Empty icon="lock" title="This link isn't available">The album may have been made private, or the link may be wrong. Ask the owner for a new link.</Empty></div>
         ) : (
           <>
